@@ -31,6 +31,8 @@ import com.crosspaste.listener.ShortcutKeysAction
 import com.crosspaste.listener.ShortcutKeysListener
 import com.crosspaste.listener.ShortcutKeysLoader
 import com.crosspaste.notification.NotificationManager
+import com.crosspaste.path.AppPathProvider
+import com.crosspaste.presist.FloatingShelfConfigPersist
 import com.crosspaste.sound.DesktopSoundService
 import com.crosspaste.sound.SoundService
 import com.crosspaste.sync.TokenCache
@@ -47,6 +49,8 @@ import com.crosspaste.ui.devices.DesktopDeviceScopeFactory
 import com.crosspaste.ui.devices.DesktopSyncScopeFactory
 import com.crosspaste.ui.devices.DeviceScopeFactory
 import com.crosspaste.ui.devices.SyncScopeFactory
+import com.crosspaste.ui.floating.FloatingShelfConfig
+import com.crosspaste.ui.floating.FloatingShelfViewModel
 import com.crosspaste.ui.settings.DesktopStoragePathManager
 import com.crosspaste.ui.settings.StoragePathManager
 import com.crosspaste.ui.theme.DesktopThemeDetector
@@ -114,6 +118,27 @@ fun desktopUiModule(): Module =
                 get(),
                 get(),
                 get<DesktopAppWindowManager>(),
+            )
+        }
+        // endregion
+
+        // region Floating Shelf
+        single<FloatingShelfConfigPersist> {
+            FloatingShelfConfigPersist.create(get<AppPathProvider>())
+        }
+
+        single<FloatingShelfConfig> {
+            val persist = get<FloatingShelfConfigPersist>()
+            runCatching { persist.read() }.getOrNull() ?: FloatingShelfConfig()
+        }
+
+        single<FloatingShelfViewModel> {
+            FloatingShelfViewModel(
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
             )
         }
         // endregion

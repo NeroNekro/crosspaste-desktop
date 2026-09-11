@@ -19,6 +19,7 @@ import com.crosspaste.db.sync.SqlSyncRuntimeInfoDao
 import com.crosspaste.db.sync.SyncRuntimeInfoDao
 import com.crosspaste.db.task.SqlTaskDao
 import com.crosspaste.db.task.TaskDao
+import com.crosspaste.desktopUiModule
 import com.crosspaste.headless.headlessUiModule
 import com.crosspaste.headless.headlessViewModelModule
 import com.crosspaste.image.OCRModule
@@ -153,7 +154,7 @@ class DesktopModule(
 
     override fun pasteComponentModule() = desktopPasteComponentModule(headless)
 
-    override fun uiModule() = desktopUiModule()
+    override fun uiModule(): Module = desktopUiModule()
 
     // ViewModelModule
     override fun viewModelModule() =

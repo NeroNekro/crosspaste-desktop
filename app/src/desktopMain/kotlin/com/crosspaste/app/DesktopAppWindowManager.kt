@@ -8,6 +8,9 @@ import com.crosspaste.listener.ShortcutKeysAction
 import com.crosspaste.listener.ShortcutKeysListener
 import com.crosspaste.path.UserDataPathProvider
 import com.crosspaste.platform.Platform
+import com.crosspaste.ui.floating.FloatingShelfConfig
+import com.crosspaste.ui.floating.FloatingShelfPosition
+import com.crosspaste.ui.floating.FloatingShelfWindowInfo
 import com.crosspaste.utils.GlobalCoroutineScope.mainCoroutineDispatcher
 import com.crosspaste.utils.ioDispatcher
 import com.crosspaste.utils.namedScope
@@ -154,6 +157,41 @@ abstract class DesktopAppWindowManager(
                 onBubbleComposeWindowChanged(value)
             }
         }
+
+    private val _floatingShelfConfig = MutableStateFlow(FloatingShelfConfig())
+    val floatingShelfConfig: StateFlow<FloatingShelfConfig> = _floatingShelfConfig
+
+    private val _floatingShelfWindowInfo = MutableStateFlow(FloatingShelfWindowInfo())
+    val floatingShelfWindowInfo: StateFlow<FloatingShelfWindowInfo> = _floatingShelfWindowInfo
+
+    fun showFloatingShelf() {
+        _floatingShelfWindowInfo.value =
+            _floatingShelfWindowInfo.value.copy(
+                show = true,
+            )
+    }
+
+    fun hideFloatingShelf() {
+        _floatingShelfWindowInfo.value =
+            _floatingShelfWindowInfo.value.copy(
+                show = false,
+            )
+    }
+
+    fun toggleFloatingShelf() {
+        val currentShow = _floatingShelfWindowInfo.value.show
+        _floatingShelfWindowInfo.value =
+            _floatingShelfWindowInfo.value.copy(
+                show = !currentShow,
+            )
+    }
+
+    fun updateFloatingShelfPosition(position: FloatingShelfPosition) {
+        _floatingShelfWindowInfo.value =
+            _floatingShelfWindowInfo.value.copy(
+                position = position,
+            )
+    }
 
     fun showBubbleWindow(pasteId: Long) {
         _bubbleWindowInfo.value = BubbleWindowInfo(show = true, pasteId = pasteId)

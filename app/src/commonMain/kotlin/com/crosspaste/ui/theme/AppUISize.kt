@@ -22,6 +22,9 @@ object AppUISize {
     val medium = 16.dp
     val large = 18.dp
     val large2X = 20.dp
+    val iconLarge = 48.dp
+    val iconMedium = 24.dp
+    val iconSmall = 16.dp
     val xLarge = 24.dp
     val xxLarge = 32.dp
     val xxxLarge = 36.dp
