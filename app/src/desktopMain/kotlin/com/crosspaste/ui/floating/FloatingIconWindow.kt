@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPosition
@@ -24,18 +25,26 @@ import org.koin.compose.koinInject
 @Composable
 fun FloatingIconWindow() {
     val appWindowManager = koinInject<DesktopAppWindowManager>()
-    val iconSize = 24.dp
-    val padding = 16.dp
+    val iconSize = 48.dp
+    val padding = 20.dp
 
-    val displayBounds =
-        androidx.compose.ui.geometry
-            .Rect(0f, 0f, 1920f, 1080f)
+    val iconPosition by remember(iconSize, padding) {
+        val pos = FloatingIconPosition.getIconPosition(iconSize, padding)
+        mutableStateOf(pos)
+    }
 
-    val windowPosition =
-        WindowPosition(
-            x = ((displayBounds.right - iconSize.value - padding.value).dp),
-            y = ((displayBounds.bottom - iconSize.value - padding.value).dp),
-        )
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val windowPosition by remember(iconPosition, density) {
+        val x =
+            with(density) {
+                iconPosition.x.toDp()
+            }
+        val y =
+            with(density) {
+                iconPosition.y.toDp()
+            }
+        mutableStateOf(WindowPosition(x, y))
+    }
 
     Window(
         onCloseRequest = { /* Do nothing - icon window should not be closed */ },
@@ -59,7 +68,8 @@ fun FloatingIconWindow() {
                 Icon(
                     imageVector = MaterialSymbols.Rounded.Content_paste,
                     contentDescription = "Floating Icon",
-                    modifier = Modifier.size(iconSize),
+                    modifier = Modifier.size(iconSize / 2),
+                    tint = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary,
                 )
             }
         }
