@@ -5,14 +5,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.window.WindowDraggableArea
 import androidx.compose.material3.Icon
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.DpSize
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPosition
@@ -20,58 +19,71 @@ import androidx.compose.ui.window.WindowState
 import com.composables.icons.materialsymbols.MaterialSymbols
 import com.composables.icons.materialsymbols.rounded.Content_paste
 import com.crosspaste.app.DesktopAppWindowManager
+import com.crosspaste.platform.Platform
+import com.crosspaste.ui.theme.AppUISize
 import org.koin.compose.koinInject
+import java.awt.Toolkit
 
 @Composable
 fun FloatingIconWindow() {
     val appWindowManager = koinInject<DesktopAppWindowManager>()
-    val iconSize = 48.dp
-    val padding = 20.dp
+    val platform = koinInject<Platform>()
+    val config by appWindowManager.floatingShelfConfig.collectAsState()
 
-    val iconPosition by remember(iconSize, padding) {
-        val pos = FloatingIconPosition.getIconPosition(iconSize, padding)
-        mutableStateOf(pos)
-    }
+    if (!config.enabled) return
 
-    val density = androidx.compose.ui.platform.LocalDensity.current
-    val windowPosition by remember(iconPosition, density) {
-        val x =
-            with(density) {
-                iconPosition.x.toDp()
-            }
-        val y =
-            with(density) {
-                iconPosition.y.toDp()
-            }
-        mutableStateOf(WindowPosition(x, y))
-    }
+    val iconSize = AppUISize.iconLarge
+    val padding = 20
+
+    val iconSizePx = (iconSize.value * Toolkit.getDefaultToolkit().screenResolution * 0.75f).toInt()
+    val (x, y) = getIconPosition(platform, iconSizePx, padding)
 
     Window(
-        onCloseRequest = { /* Do nothing - icon window should not be closed */ },
+        onCloseRequest = { },
         visible = true,
-        state = WindowState(size = DpSize(iconSize, iconSize), position = windowPosition),
+        state =
+            WindowState(
+                size =
+                    androidx.compose.ui.unit
+                        .DpSize(iconSize, iconSize),
+                position = WindowPosition(x.dp, y.dp),
+            ),
         title = "",
         transparent = true,
         undecorated = true,
         alwaysOnTop = true,
         resizable = false,
     ) {
-        WindowDraggableArea {
-            Box(
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .background(Color.Transparent)
-                        .clickable { appWindowManager.showFloatingShelf() },
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = MaterialSymbols.Rounded.Content_paste,
-                    contentDescription = "Floating Icon",
-                    modifier = Modifier.size(iconSize / 2),
-                    tint = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary,
-                )
-            }
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .background(Color.Transparent)
+                    .clickable { appWindowManager.showFloatingShelf() },
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = MaterialSymbols.Rounded.Content_paste,
+                contentDescription = "Floating Icon",
+                modifier = Modifier.size(iconSize / 2),
+                tint = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary,
+            )
         }
     }
+}
+
+private fun getIconPosition(
+    platform: Platform,
+    iconSize: Int,
+    padding: Int,
+): Pair<Int, Int> {
+    val (screenWidth, screenHeight) = getScreenSize(platform)
+    val x = screenWidth - iconSize - padding
+    val y = screenHeight - iconSize - padding
+    return Pair(x, y)
+}
+
+private fun getScreenSize(platform: Platform): Pair<Int, Int> {
+    val screenSize = Toolkit.getDefaultToolkit().screenSize
+    return Pair(screenSize.width, screenSize.height)
 }

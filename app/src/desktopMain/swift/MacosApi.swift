@@ -452,6 +452,15 @@ private func applyActivationPolicy(showDockIcon: Bool) -> Bool {
     return false
 }
 
+
+@_cdecl("setWindowPosition")
+public func setWindowPosition(_ rawPtr: UnsafeRawPointer?, x: Int, y: Int) {
+    guard let rawPtr = rawPtr else { return }
+    let window = Unmanaged<NSWindow>.fromOpaque(rawPtr).takeUnretainedValue()
+    DispatchQueue.main.async {
+        window.setFrameOrigin(CGPoint(x: x, y: y))
+    }
+}
 @_cdecl("bringToFront")
 public func bringToFront(windowTitle: UnsafePointer<CChar>, showDockIcon: Int32) {
     let title = String(cString: windowTitle)
