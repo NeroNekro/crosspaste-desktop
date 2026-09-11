@@ -293,9 +293,10 @@ tasks.named("desktopProcessResources") {
 private fun initJvmArgs(
     jvmArgs: (Array<String>) -> Unit,
     buildFullPlatform: Boolean = false,
+    defaultAppEnv: String = "DEVELOPMENT",
 ) {
     // Add system properties that need to be set for all platforms
-    val appEnv = project.findProperty("appEnv")?.toString() ?: "DEVELOPMENT"
+    val appEnv = project.findProperty("appEnv")?.toString() ?: defaultAppEnv
     val globalListener = project.findProperty("globalListener")?.toString() ?: "true"
     jvmArgs(
         arrayOf(
@@ -480,9 +481,19 @@ compose.desktop {
             // If we want to use arthas attach application in production environment,
             // we need to use
             // includeAllModules = true
-            modules("jdk.charsets", "java.net.http")
+            modules(
+                "java.instrument",
+                "java.management",
+                "java.naming",
+                "java.net.http",
+                "java.sql",
+                "jdk.charsets",
+                "jdk.javadoc",
+                "jdk.security.auth",
+                "jdk.unsupported",
+            )
 
-            val appEnv = project.findProperty("appEnv")?.toString() ?: "DEVELOPMENT"
+            val appEnv = project.findProperty("appEnv")?.toString() ?: "PRODUCTION"
 
             val jvmArgsLambda: (Array<String>) -> Unit = { args ->
                 args.forEach {
@@ -490,7 +501,14 @@ compose.desktop {
                 }
             }
 
-            initJvmArgs(jvmArgsLambda, buildFullPlatform)
+            // A packaged application must use installed-app paths by default.
+            // DEVELOPMENT resolves data paths relative to user.dir, which is not
+            // the project directory when Finder launches the bundle.
+            initJvmArgs(
+                jvmArgs = jvmArgsLambda,
+                buildFullPlatform = buildFullPlatform,
+                defaultAppEnv = "PRODUCTION",
+            )
 
             if (appEnv != "DEVELOPMENT") {
                 tasks.withType<Jar> {
