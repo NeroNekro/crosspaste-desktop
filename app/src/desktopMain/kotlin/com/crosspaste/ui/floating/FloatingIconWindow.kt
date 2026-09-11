@@ -49,7 +49,7 @@ fun FloatingIconWindow() {
                 position = WindowPosition(x.dp, y.dp),
             ),
         title = "",
-        transparent = true,
+        transparent = false,
         undecorated = true,
         alwaysOnTop = true,
         resizable = false,
