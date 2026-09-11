@@ -573,7 +573,7 @@ compose.desktop {
 
             if (os.isLinux || buildFullPlatform) {
                 linux {
-                    targetFormats(TargetFormat.Deb)
+                    targetFormats(TargetFormat.Deb, TargetFormat.AppImage)
 
                     modules("jdk.security.auth")
 
