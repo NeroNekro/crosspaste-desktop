@@ -480,7 +480,7 @@ compose.desktop {
             // If we want to use arthas attach application in production environment,
             // we need to use
             // includeAllModules = true
-            modules("jdk.charsets", "java.net.http")
+            modules("jdk.charsets", "java.net.http", "java.sql", "java.sql.rowset")
 
             val appEnv = project.findProperty("appEnv")?.toString() ?: "DEVELOPMENT"
 
