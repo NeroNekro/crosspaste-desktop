@@ -15,6 +15,7 @@ import com.crosspaste.app.generated.resources.Res
 import com.crosspaste.app.generated.resources.crosspaste
 import com.crosspaste.app.generated.resources.crosspaste_mac
 import com.crosspaste.platform.Platform
+import com.crosspaste.ui.floating.FloatingIconWindow
 import com.crosspaste.ui.floating.FloatingShelfOverlay
 import com.crosspaste.ui.tray.TrayView
 import org.jetbrains.compose.resources.painterResource
@@ -81,5 +82,10 @@ fun ApplicationScope.CrossPasteWindows(exiting: Boolean) {
     val floatingShelfWindowInfo by appWindowManager.floatingShelfWindowInfo.collectAsState()
     if (floatingShelfWindowInfo.show) {
         FloatingShelfOverlay()
+    }
+
+    val floatingShelfConfig by appWindowManager.floatingShelfConfig.collectAsState()
+    if (floatingShelfConfig.enabled) {
+        FloatingIconWindow()
     }
 }

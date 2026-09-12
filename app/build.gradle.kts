@@ -293,10 +293,9 @@ tasks.named("desktopProcessResources") {
 private fun initJvmArgs(
     jvmArgs: (Array<String>) -> Unit,
     buildFullPlatform: Boolean = false,
-    defaultAppEnv: String = "DEVELOPMENT",
 ) {
     // Add system properties that need to be set for all platforms
-    val appEnv = project.findProperty("appEnv")?.toString() ?: defaultAppEnv
+    val appEnv = project.findProperty("appEnv")?.toString() ?: "DEVELOPMENT"
     val globalListener = project.findProperty("globalListener")?.toString() ?: "true"
     jvmArgs(
         arrayOf(
@@ -481,19 +480,9 @@ compose.desktop {
             // If we want to use arthas attach application in production environment,
             // we need to use
             // includeAllModules = true
-            modules(
-                "java.instrument",
-                "java.management",
-                "java.naming",
-                "java.net.http",
-                "java.sql",
-                "jdk.charsets",
-                "jdk.javadoc",
-                "jdk.security.auth",
-                "jdk.unsupported",
-            )
+            modules("jdk.charsets", "java.net.http", "java.sql", "java.sql.rowset")
 
-            val appEnv = project.findProperty("appEnv")?.toString() ?: "PRODUCTION"
+            val appEnv = project.findProperty("appEnv")?.toString() ?: "DEVELOPMENT"
 
             val jvmArgsLambda: (Array<String>) -> Unit = { args ->
                 args.forEach {
@@ -501,14 +490,7 @@ compose.desktop {
                 }
             }
 
-            // A packaged application must use installed-app paths by default.
-            // DEVELOPMENT resolves data paths relative to user.dir, which is not
-            // the project directory when Finder launches the bundle.
-            initJvmArgs(
-                jvmArgs = jvmArgsLambda,
-                buildFullPlatform = buildFullPlatform,
-                defaultAppEnv = "PRODUCTION",
-            )
+            initJvmArgs(jvmArgsLambda, buildFullPlatform)
 
             if (appEnv != "DEVELOPMENT") {
                 tasks.withType<Jar> {

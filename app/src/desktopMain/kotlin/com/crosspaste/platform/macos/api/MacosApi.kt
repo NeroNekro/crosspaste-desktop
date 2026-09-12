@@ -81,8 +81,12 @@ interface MacosApi : Library {
         isDark: Boolean,
     )
 
-    // showDockIcon is an Int (0/1) rather than Boolean: JNA marshals Java boolean
-    // as a 32-bit -1 for true, which does not match Swift's zero-extended i1 Bool ABI
+    fun setWindowPosition(
+        windowPtr: Pointer?,
+        x: Int,
+        y: Int,
+    )
+
     fun bringToFront(
         windowTitle: String,
         showDockIcon: Int,
