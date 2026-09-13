@@ -72,8 +72,6 @@ fun ApplicationScope.CrossPasteWindows(exiting: Boolean) {
 
     MainWindow(windowIcon)
 
-    SearchWindow(windowIcon)
-
     val bubbleWindowInfo by appWindowManager.bubbleWindowInfo.collectAsState()
     if (bubbleWindowInfo.show) {
         BubbleWindow(windowIcon)

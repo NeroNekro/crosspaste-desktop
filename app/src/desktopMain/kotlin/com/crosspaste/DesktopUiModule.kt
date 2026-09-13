@@ -49,8 +49,6 @@ import com.crosspaste.ui.devices.DesktopDeviceScopeFactory
 import com.crosspaste.ui.devices.DesktopSyncScopeFactory
 import com.crosspaste.ui.devices.DeviceScopeFactory
 import com.crosspaste.ui.devices.SyncScopeFactory
-import com.crosspaste.ui.floating.FloatingShelfConfig
-import com.crosspaste.ui.floating.FloatingShelfViewModel
 import com.crosspaste.ui.settings.DesktopStoragePathManager
 import com.crosspaste.ui.settings.StoragePathManager
 import com.crosspaste.ui.theme.DesktopThemeDetector
@@ -76,6 +74,7 @@ fun desktopUiModule(): Module =
                 lazy { get() },
                 lazy { get() },
                 lazy { get() },
+                get(),
                 get(),
                 get(),
             )
@@ -127,20 +126,6 @@ fun desktopUiModule(): Module =
             FloatingShelfConfigPersist.create(get<AppPathProvider>())
         }
 
-        single<FloatingShelfConfig> {
-            val persist = get<FloatingShelfConfigPersist>()
-            runCatching { persist.read() }.getOrNull() ?: FloatingShelfConfig()
-        }
-
-        single<FloatingShelfViewModel> {
-            FloatingShelfViewModel(
-                get(),
-                get(),
-                get(),
-                get(),
-                get(),
-            )
-        }
         // endregion
 
         // region Misc

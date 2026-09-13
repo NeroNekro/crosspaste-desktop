@@ -8,6 +8,7 @@ import com.crosspaste.listener.ShortcutKeysAction
 import com.crosspaste.listener.ShortcutKeysListener
 import com.crosspaste.path.UserDataPathProvider
 import com.crosspaste.platform.Platform
+import com.crosspaste.presist.FloatingShelfConfigPersist
 import com.crosspaste.ui.floating.FloatingShelfConfig
 import com.crosspaste.ui.floating.FloatingShelfPosition
 import com.crosspaste.ui.floating.FloatingShelfWindowInfo
@@ -32,6 +33,7 @@ fun getDesktopAppWindowManager(
     lazyShortcutKeysListener: Lazy<ShortcutKeysListener>,
     platform: Platform,
     userDataPathProvider: UserDataPathProvider,
+    floatingShelfConfigPersist: FloatingShelfConfigPersist,
 ): DesktopAppWindowManager =
     if (platform.isMacos()) {
         MacAppWindowManager(
@@ -41,6 +43,7 @@ fun getDesktopAppWindowManager(
             lazyShortcutKeys,
             lazyShortcutKeysListener,
             userDataPathProvider,
+            floatingShelfConfigPersist,
         )
     } else if (platform.isWindows()) {
         WinAppWindowManager(
@@ -49,6 +52,7 @@ fun getDesktopAppWindowManager(
             lazyShortcutKeys,
             lazyShortcutKeysListener,
             userDataPathProvider,
+            floatingShelfConfigPersist,
         )
     } else if (platform.isLinux()) {
         LinuxAppWindowManager(
@@ -58,6 +62,7 @@ fun getDesktopAppWindowManager(
             lazyShortcutKeysAction,
             lazyShortcutKeysListener,
             userDataPathProvider,
+            floatingShelfConfigPersist,
         )
     } else {
         throw IllegalStateException("Unsupported platform: $platform")
@@ -83,6 +88,7 @@ data class WindowInfo(
 
 abstract class DesktopAppWindowManager(
     val appSize: DesktopAppSize,
+    private val floatingShelfConfigPersist: FloatingShelfConfigPersist? = null,
 ) : AppWindowManager() {
 
     companion object {
@@ -158,7 +164,12 @@ abstract class DesktopAppWindowManager(
             }
         }
 
-    private val _floatingShelfConfig = MutableStateFlow(FloatingShelfConfig())
+    private val _floatingShelfConfig =
+        MutableStateFlow(
+            runCatching { floatingShelfConfigPersist?.read() }
+                .onFailure { logger.warn(it) { "Failed to load floating shelf configuration" } }
+                .getOrNull() ?: FloatingShelfConfig(),
+        )
     val floatingShelfConfig: StateFlow<FloatingShelfConfig> = _floatingShelfConfig
 
     private val _floatingShelfWindowInfo = MutableStateFlow(FloatingShelfWindowInfo())
@@ -187,10 +198,11 @@ abstract class DesktopAppWindowManager(
     }
 
     fun updateFloatingShelfPosition(position: FloatingShelfPosition) {
-        _floatingShelfWindowInfo.value =
-            _floatingShelfWindowInfo.value.copy(
-                position = position,
-            )
+        val updatedConfig = _floatingShelfConfig.value.copy(position = position)
+        _floatingShelfConfig.value = updatedConfig
+        ioScope.launch {
+            floatingShelfConfigPersist?.save(updatedConfig)
+        }
     }
 
     fun showBubbleWindow(pasteId: Long) {

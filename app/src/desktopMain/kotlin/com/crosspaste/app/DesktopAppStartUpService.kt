@@ -288,9 +288,30 @@ class LinuxAppStartUpService(
     private val filePersist = FilePersist
 
     private val appExePath =
-        appPathProvider.pasteAppPath
-            .resolve("bin")
-            .resolve("crosspaste")
+        resolveLinuxStartupExecutable(
+            appImagePath = System.getenv("APPIMAGE"),
+            installedExecutable =
+                appPathProvider.pasteAppPath
+                    .resolve("bin")
+                    .resolve("crosspaste")
+                    .toString(),
+        )
+
+    private val desktopFilePath = appPathProvider.userHome.resolve(".config/autostart/$desktopFile")
+
+    private fun desktopFileContent(): String =
+        """
+        [Desktop Entry]
+        Type=Application
+        Name=CrossPaste
+        Exec=${quoteDesktopExecArgument(appExePath)} --minimize
+        Categories=Utility;
+        Terminal=false
+        X-GNOME-Autostart-enabled=true
+        X-GNOME-Autostart-Delay=10
+        X-MATE-Autostart-Delay=10
+        X-KDE-autostart-after=panel
+        """.trimIndent()
 
     override fun followConfig() {
         if (configManager.getCurrentConfig().enableAutoStartUp) {
@@ -300,33 +321,18 @@ class LinuxAppStartUpService(
         }
     }
 
-    override fun isAutoStartUp(): Boolean =
-        appPathProvider.userHome
-            .resolve(".config/autostart/$desktopFile")
-            .toFile()
-            .exists()
+    override fun isAutoStartUp(): Boolean {
+        val file = desktopFilePath.toFile()
+        return file.isFile && runCatching { file.readText() == desktopFileContent() }.getOrDefault(false)
+    }
 
     override fun makeAutoStartUp() {
         runCatching {
             if (!isAutoStartUp()) {
-                logger.info { "Make auto startup" }
-                val desktopFilePath = appPathProvider.userHome.resolve(".config/autostart/$desktopFile")
+                logger.info { "Create or refresh auto startup" }
                 filePersist
                     .createOneFilePersist(desktopFilePath)
-                    .saveBytes(
-                        """
-                        [Desktop Entry]
-                        Type=Application
-                        Name=CrossPaste
-                        Exec=$appExePath --minimize
-                        Categories=Utility
-                        Terminal=false
-                        X-GNOME-Autostart-enabled=true
-                        X-GNOME-Autostart-Delay=10
-                        X-MATE-Autostart-Delay=10
-                        X-KDE-autostart-after=panel
-                        """.trimIndent().encodeToByteArray(),
-                    )
+                    .saveBytes(desktopFileContent().encodeToByteArray())
             }
         }.onFailure { e ->
             logger.error(e) { "Failed to make auto startup" }
@@ -335,15 +341,29 @@ class LinuxAppStartUpService(
 
     override fun removeAutoStartUp() {
         runCatching {
-            if (isAutoStartUp()) {
+            if (desktopFilePath.toFile().exists()) {
                 logger.info { "Remove auto startup" }
-                appPathProvider.userHome
-                    .resolve(".config/autostart/$desktopFile")
-                    .toFile()
-                    .delete()
+                desktopFilePath.toFile().delete()
             }
         }.onFailure { e ->
             logger.error(e) { "Failed to remove auto startup" }
         }
     }
 }
+
+internal fun resolveLinuxStartupExecutable(
+    appImagePath: String?,
+    installedExecutable: String,
+): String = appImagePath?.takeIf { it.isNotBlank() } ?: installedExecutable
+
+internal fun quoteDesktopExecArgument(argument: String): String =
+    buildString {
+        append('"')
+        argument.forEach { character ->
+            if (character == '\\' || character == '"' || character == '`' || character == '$') {
+                append('\\')
+            }
+            append(character)
+        }
+        append('"')
+    }

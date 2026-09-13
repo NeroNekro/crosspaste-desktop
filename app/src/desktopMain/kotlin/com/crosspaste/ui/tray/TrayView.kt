@@ -15,7 +15,6 @@ import com.crosspaste.app.AppName
 import com.crosspaste.app.AppUpdateService
 import com.crosspaste.app.DesktopAppWindowManager
 import com.crosspaste.app.ExitMode
-import com.crosspaste.app.WindowTrigger
 import com.crosspaste.app.WindowsUpdateChannel
 import com.crosspaste.app.WindowsZipUpdater
 import com.crosspaste.app.generated.resources.Res
@@ -65,10 +64,10 @@ fun ApplicationScope.TrayView(windowIcon: Painter) {
         }
 
         if (isLinux) {
-            Item(label = copywriter.getText("open_search_window")) {
+            Item(label = copywriter.getText("pasteboard")) {
                 mainCoroutineDispatcher.launch {
                     appWindowManager.saveCurrentActiveAppInfo()
-                    appWindowManager.showSearchWindow(WindowTrigger.MENU)
+                    appWindowManager.showFloatingShelf()
                 }
             }
 
@@ -108,12 +107,8 @@ fun ApplicationScope.TrayView(windowIcon: Painter) {
             primaryAction = {
                 mainCoroutineDispatcher.launch {
                     appWindowManager.hideMainWindow()
-                    if (appWindowManager.getCurrentSearchWindowInfo().show) {
-                        appWindowManager.hideSearchWindow()
-                    } else {
-                        appWindowManager.saveCurrentActiveAppInfo()
-                        appWindowManager.showSearchWindow(WindowTrigger.TRAY_ICON)
-                    }
+                    appWindowManager.saveCurrentActiveAppInfo()
+                    appWindowManager.toggleFloatingShelf()
                 }
             },
             menuContent = menuContent,
@@ -125,7 +120,7 @@ fun ApplicationScope.TrayView(windowIcon: Painter) {
             primaryAction = {
                 mainCoroutineDispatcher.launch {
                     appWindowManager.saveCurrentActiveAppInfo()
-                    appWindowManager.showSearchWindow(WindowTrigger.TRAY_ICON)
+                    appWindowManager.toggleFloatingShelf()
                 }
             },
             menuContent = menuContent,

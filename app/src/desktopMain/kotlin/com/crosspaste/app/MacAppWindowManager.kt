@@ -6,6 +6,7 @@ import com.crosspaste.listener.ShortcutKeysListener
 import com.crosspaste.path.UserDataPathProvider
 import com.crosspaste.platform.macos.MacAppUtils
 import com.crosspaste.platform.macos.MacPasteUtils
+import com.crosspaste.presist.FloatingShelfConfigPersist
 import com.crosspaste.utils.getSystemProperty
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -22,7 +23,8 @@ class MacAppWindowManager(
     lazyShortcutKeys: Lazy<ShortcutKeys>,
     private val lazyShortcutKeysListener: Lazy<ShortcutKeysListener>,
     private val userDataPathProvider: UserDataPathProvider,
-) : DesktopAppWindowManager(appSize) {
+    floatingShelfConfigPersist: FloatingShelfConfigPersist,
+) : DesktopAppWindowManager(appSize, floatingShelfConfigPersist) {
 
     private val crosspasteBundleID = getSystemProperty().get("mac.bundleID")
 

@@ -52,7 +52,7 @@ class DesktopShortKeysAction(
             PASTE_LOCAL_LAST -> pasteLast(true)
             PASTE_REMOTE_LAST -> pasteLast(false)
             SHOW_MAIN -> showMainWindow()
-            SHOW_SEARCH -> switchSearchWindow()
+            SHOW_SEARCH -> switchFloatingShelf()
             HIDE_WINDOW -> hideWindow()
             TOGGLE_PASTEBOARD_MONITORING -> togglePasteboardMonitoring()
             TOGGLE_ENCRYPT -> toggleEncrypt()
@@ -87,14 +87,13 @@ class DesktopShortKeysAction(
         }
     }
 
-    private fun switchSearchWindow() {
+    private fun switchFloatingShelf() {
         mainRunAction(
-            actionName = "OpenSearchWindow",
-            actionLogMessage = "Open search window",
+            actionName = "OpenFloatingShelf",
+            actionLogMessage = "Open floating shelf",
         ) {
-            appWindowManager.switchSearchWindow(WindowTrigger.SHORTCUT) {
-                appWindowManager.saveCurrentActiveAppInfo()
-            }
+            appWindowManager.saveCurrentActiveAppInfo()
+            appWindowManager.toggleFloatingShelf()
         }
     }
 
@@ -112,6 +111,8 @@ class DesktopShortKeysAction(
             if (appWindowManager.getCurrentSearchWindowInfo().show) {
                 appWindowManager.hideSearchWindow()
             }
+
+            appWindowManager.hideFloatingShelf()
         }
     }
 

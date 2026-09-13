@@ -11,6 +11,7 @@ import com.crosspaste.platform.windows.WindowFocusRecorder
 import com.crosspaste.platform.windows.WindowsFocusUtils
 import com.crosspaste.platform.windows.api.User32.Companion.INSTANCE
 import com.crosspaste.platform.windows.api.WndEnumProc
+import com.crosspaste.presist.FloatingShelfConfigPersist
 import com.sun.jna.Native
 import com.sun.jna.platform.win32.WinDef
 import com.sun.jna.platform.win32.WinDef.HWND
@@ -25,7 +26,8 @@ class WinAppWindowManager(
     private val lazyShortcutKeys: Lazy<ShortcutKeys>,
     private val lazyShortcutKeysListener: Lazy<ShortcutKeysListener>,
     userDataPathProvider: UserDataPathProvider,
-) : DesktopAppWindowManager(appSize) {
+    floatingShelfConfigPersist: FloatingShelfConfigPersist,
+) : DesktopAppWindowManager(appSize, floatingShelfConfigPersist) {
 
     private var _cachedMainHWND: HWND? = null
     private var _cachedSearchHWND: HWND? = null

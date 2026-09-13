@@ -10,6 +10,7 @@ import com.crosspaste.platform.linux.LinuxActiveAppResolver
 import com.crosspaste.platform.linux.LinuxDesktopAppIcon
 import com.crosspaste.platform.linux.api.X11Api
 import com.crosspaste.platform.linux.api.X11Api.Companion.bringToBack
+import com.crosspaste.presist.FloatingShelfConfigPersist
 import com.sun.jna.NativeLong
 import com.sun.jna.platform.unix.X11.Window
 import io.ktor.util.collections.ConcurrentSet
@@ -27,7 +28,8 @@ class LinuxAppWindowManager(
     private val lazyShortcutKeysAction: Lazy<ShortcutKeysAction>,
     private val lazyShortcutKeysListener: Lazy<ShortcutKeysListener>,
     private val userDataPathProvider: UserDataPathProvider,
-) : DesktopAppWindowManager(appSize) {
+    floatingShelfConfigPersist: FloatingShelfConfigPersist,
+) : DesktopAppWindowManager(appSize, floatingShelfConfigPersist) {
 
     private val prevLinuxAppInfo: MutableStateFlow<LinuxAppInfo?> = MutableStateFlow(null)
 

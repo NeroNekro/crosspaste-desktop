@@ -1,37 +1,90 @@
 package com.crosspaste.ui.floating
 
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntOffset
+import java.awt.GraphicsConfiguration
 import java.awt.GraphicsEnvironment
+import java.awt.MouseInfo
+import java.awt.Point
+import java.awt.Rectangle
 import java.awt.Toolkit
 
 object FloatingIconPosition {
-    fun getIconPosition(
-        iconSizeDp: Dp,
-        paddingDp: Dp,
-    ): IntOffset {
-        val ge = GraphicsEnvironment.getLocalGraphicsEnvironment()
-        val configuration = ge.defaultScreenDevice.defaultConfiguration
-        val bounds = configuration.bounds
-        val insets = Toolkit.getDefaultToolkit().getScreenInsets(configuration)
 
-        val usableWidth = bounds.width - insets.left - insets.right
-        val usableHeight = bounds.height - insets.top - insets.bottom
+    private const val EDGE_PADDING_PX = 16
 
-        val iconSizePx = iconSizeDp.toPx()
-        val paddingPx = paddingDp.toPx()
-
-        val x = (usableWidth - iconSizePx - paddingPx).toInt()
-        val y = (usableHeight - iconSizePx - paddingPx).toInt()
-
-        return IntOffset(x, y)
+    fun currentUsableBounds(): Rectangle {
+        val environment = GraphicsEnvironment.getLocalGraphicsEnvironment()
+        val pointer = runCatching { MouseInfo.getPointerInfo()?.location }.getOrNull()
+        val configuration =
+            environment.screenDevices
+                .map { it.defaultConfiguration }
+                .firstOrNull { pointer != null && it.bounds.contains(pointer) }
+                ?: environment.defaultScreenDevice.defaultConfiguration
+        return usableBounds(configuration)
     }
 
-    private fun Dp.toPx(): Float {
-        val metrics =
-            java.awt.Toolkit
-                .getDefaultToolkit()
-                .screenResolution
-        return this.value * metrics * 0.75f
+    fun iconLocation(
+        position: FloatingShelfPosition,
+        iconSizePx: Int,
+    ): Point {
+        val bounds = currentUsableBounds()
+        val defaultY = bounds.y + bounds.height - iconSizePx - EDGE_PADDING_PX
+        val requested =
+            when (position) {
+                FloatingShelfPosition.LEFT -> Point(bounds.x + EDGE_PADDING_PX, defaultY)
+                FloatingShelfPosition.RIGHT ->
+                    Point(bounds.x + bounds.width - iconSizePx - EDGE_PADDING_PX, defaultY)
+                is FloatingShelfPosition.Free -> Point(position.x, position.y)
+            }
+        return clampToVisibleBounds(requested, iconSizePx, iconSizePx, bounds)
+    }
+
+    fun shelfLocation(
+        position: FloatingShelfPosition,
+        shelfWidthPx: Int,
+        shelfHeightPx: Int,
+    ): Point {
+        val bounds = currentUsableBounds()
+        val centeredY = bounds.y + (bounds.height - shelfHeightPx) / 2
+        val requested =
+            when (position) {
+                FloatingShelfPosition.LEFT -> Point(bounds.x + EDGE_PADDING_PX, centeredY)
+                FloatingShelfPosition.RIGHT ->
+                    Point(bounds.x + bounds.width - shelfWidthPx - EDGE_PADDING_PX, centeredY)
+                is FloatingShelfPosition.Free -> {
+                    val iconOnLeftHalf = position.x + shelfWidthPx / 2 < bounds.centerX
+                    val x =
+                        if (iconOnLeftHalf) {
+                            position.x + EDGE_PADDING_PX
+                        } else {
+                            position.x - shelfWidthPx + EDGE_PADDING_PX
+                        }
+                    Point(x, position.y - shelfHeightPx / 2)
+                }
+            }
+        return clampToVisibleBounds(requested, shelfWidthPx, shelfHeightPx, bounds)
+    }
+
+    internal fun clampToVisibleBounds(
+        requested: Point,
+        width: Int,
+        height: Int,
+        bounds: Rectangle,
+    ): Point =
+        Point(
+            requested.x.coerceIn(bounds.x, (bounds.x + bounds.width - width).coerceAtLeast(bounds.x)),
+            requested.y.coerceIn(bounds.y, (bounds.y + bounds.height - height).coerceAtLeast(bounds.y)),
+        )
+
+    private fun usableBounds(configuration: GraphicsConfiguration): Rectangle {
+        val bounds = Rectangle(configuration.bounds)
+        val insets =
+            runCatching { Toolkit.getDefaultToolkit().getScreenInsets(configuration) }.getOrNull()
+                ?: return bounds
+        return Rectangle(
+            bounds.x + insets.left,
+            bounds.y + insets.top,
+            (bounds.width - insets.left - insets.right).coerceAtLeast(1),
+            (bounds.height - insets.top - insets.bottom).coerceAtLeast(1),
+        )
     }
 }
